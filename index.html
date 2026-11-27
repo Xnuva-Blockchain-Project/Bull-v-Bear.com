@@ -15,7 +15,7 @@
 <main>
 <section class="hero"><div class="eyebrow">XNUVA Blockchain Project</div><h1>Mine. Distribute.<br>Decentralise.</h1><p class="lead">An independent cryptocurrency faucet designed to help people take their first steps into decentralised networks, without needing to purchase coins or rely on an exchange.</p></section>
 <section class="notice" aria-labelledby="launch"><h2 id="launch">The faucet treasury is growing.</h2><p>Our mining rotation is now configured to fund the faucet across five existing cryptocurrency networks. Public distribution will begin only after the relevant integrations and payout safeguards are qualified.</p><p><strong>Claims are not yet open.</strong> No wallet addresses, payments, registrations or deposits are being accepted. No launch date has been announced.</p></section>
-<section class="treasury" aria-labelledby="treasury"><h2 id="treasury">Treasury update</h2><p>Last verified: 27 November 2026. These are recorded mining rewards, not a continuously updated balance.</p><div class="table-wrap"><table><thead><tr><th scope="col">Currency (future name)</th><th scope="col">Verified mining rewards</th></tr></thead><tbody><tr><td>Sestovi (legacy ZUS)</td><td><strong>280.00000000</strong> — immature</td></tr><tr><td>Aurzola (legacy ERA)</td><td>Not yet verified</td></tr><tr><td>Asveru (legacy HOPE)</td><td>Not yet verified</td></tr><tr><td>Denzuve (legacy TAO)</td><td>Not yet verified</td></tr><tr><td>Duprezo (legacy XNUVA)</td><td>Not yet verified</td></tr></tbody></table></div><p>Immature rewards cannot yet be spent. No public payouts have begun.</p><h2>How the coins will be distributed</h2><p>Once claims open, eligible users will receive small amounts of cryptocurrency directly into their own wallets. No purchase or deposit is required.</p></section>
+<section class="treasury" aria-labelledby="treasury"><h2 id="treasury">Treasury update</h2><p id="treasury-status" role="status">Awaiting live treasury data.</p><div class="table-wrap"><table><thead><tr><th scope="col">Currency (future name)</th><th scope="col">Matured rewards</th><th scope="col">Pending rewards</th></tr></thead><tbody><tr><td>Aurzola</td><td id="era-matured">—</td><td id="era-pending">—</td></tr><tr><td>Sestovi</td><td id="zus-matured">—</td><td id="zus-pending">—</td></tr><tr><td>Asveru</td><td id="hope-matured">—</td><td id="hope-pending">—</td></tr><tr><td>Denzuve</td><td id="tao-matured">—</td><td id="tao-pending">—</td></tr><tr><td>Duprezo</td><td id="xnuva-matured">—</td><td id="xnuva-pending">—</td></tr></tbody></table></div><p>Immature rewards cannot yet be spent. No public payouts have begun.</p><h2>How the coins will be distributed</h2><p>Once claims open, eligible users will receive small amounts of cryptocurrency directly into their own wallets. No purchase or deposit is required.</p></section>
 <section aria-label="How the planned faucet works" class="grid">
 <article class="tile"><span class="number">01 / MINE</span><h3>Mining-funded</h3><p>A dedicated share of the project's mining rotation funds the faucet treasury. Visitors' devices will not be used for mining.</p></article>
 <article class="tile"><span class="number">02 / CLAIM</span><h3>Your wallet, your coins</h3><p>Once launched, eligible visitors will be able to submit a public receiving address for a supported currency. Payouts will depend on matured rewards, available reserves and abuse-prevention limits.</p></article>
@@ -24,5 +24,44 @@
 <section><h2>Explore the ecosystem</h2><p>Learn about the project, independent nodes and blockchain history while the faucet is being developed.</p><div class="links"><a href="https://europazeus.org/">EuropaZeus — project website</a><a href="https://ezhscan.com/">EZHScan — blockchain explorer</a><a href="https://github.com/Xnuva-Blockchain-Project/Bull-v-Bear.com">Faucet source repository</a></div></section>
 </main>
 <footer>Bull v Bear · An XNUVA Blockchain Project initiative.<br>Development preview only. No investment offer, guaranteed rewards or active faucet service. The former classifieds project is separate from this initiative.</footer>
+<script>
+(() => {
+ const coins = ['era','zus','hope','tao','xnuva'];
+ const status = document.getElementById('treasury-status');
+ let running = false, last = null;
+ async function refresh() {
+  if (running) return;
+  running = true;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+   const response = await fetch('./treasury.json', {cache:'no-store',signal:controller.signal});
+   if (!response.ok) throw new Error('unavailable');
+   const data = await response.json();
+   if (data.schema !== 1 || !data.coins) throw new Error('schema');
+   const now = Date.now();
+   const published = Date.parse(data.updated_at);
+   if (!Number.isFinite(published) || published > now + 60000 || published < now - 900000) throw new Error('stale');
+   const rows = coins.map(key => {
+    const row = data.coins[key];
+    if (!row || row.status !== 'ok') return [key,'Unavailable','Unavailable'];
+    const stamp = Date.parse(row.updated_at);
+    if (!Number.isFinite(stamp) || stamp > now + 60000 || stamp < now - 900000) return [key,'Unavailable','Unavailable'];
+    if (![row.matured,row.pending].every(v => typeof v === 'string' && /^\d+\.\d{8}$/.test(v))) throw new Error('amount');
+    return [key,row.matured,row.pending];
+   });
+   rows.forEach(([key,m,p]) => {
+    document.getElementById(key+'-matured').textContent=m;
+    document.getElementById(key+'-pending').textContent=p;
+   });
+   last = published;
+   status.textContent = 'Last update: '+new Date(published).toISOString().replace('T',' ').slice(0,19)+' UTC. Refreshes every five minutes.';
+  } catch (_) {
+   status.textContent = last ? 'Update unavailable — showing last received figures from '+new Date(last).toISOString().slice(0,19).replace('T',' ')+' UTC (not live).' : 'Live treasury figures currently unavailable.';
+  } finally {clearTimeout(timeout);running=false;}
+ }
+ refresh();setInterval(refresh,300000);
+})();
+</script>
 </body>
 </html>
