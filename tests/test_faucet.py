@@ -6,6 +6,7 @@ from backend.faucet import Faucet
 class FaucetTests(unittest.TestCase):
     def setUp(self):
         self.f = Faucet()
+        self.f.configure_simulation(healthy=True, minimum=100, maximum=100, divisor=1)
         self.f.fund(200)
         self.address = "sim-DZUV-abcdefgh"
 
@@ -47,6 +48,7 @@ class FaucetTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             path = str(Path(d)/"simulation.db")
             f = Faucet(path)
+            f.configure_simulation(healthy=True, minimum=100, maximum=100, divisor=1)
             f.fund(100)
             c = f.claim("DZUV",self.address,100000)
             f.close()
