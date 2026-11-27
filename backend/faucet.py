@@ -1,23 +1,14 @@
 """Offline simulation only. No network or wallet RPC."""
-import re
 import sqlite3
 import uuid
 from contextlib import contextmanager
 
-CURRENCIES = {"DZUV": "Denzuve", "AUZV": "Aurzola", "SEZQ": "Sestovi",
-              "DPZE": "Duprezo", "ASVR": "Asveru"}
-
-class SimulatedWallet:
-    def validate(self, address):
-        return isinstance(address, str) and re.fullmatch(r"sim-DZUV-[a-zA-Z0-9]{8,64}", address) is not None
-
-    def receipt(self, claim_id):
-        return "simulation-" + claim_id
+from backend.adapters import CURRENCIES, simulation_adapter
 
 class Faucet:
     def __init__(self, path=":memory:"):
         self.db = sqlite3.connect(path, isolation_level=None)
-        self.wallet = SimulatedWallet()
+        self.wallet = simulation_adapter("DZUV")
         self.db.executescript("""
         CREATE TABLE IF NOT EXISTS treasury (
           id INTEGER PRIMARY KEY CHECK(id=1), funds INTEGER NOT NULL CHECK(funds>=0));
