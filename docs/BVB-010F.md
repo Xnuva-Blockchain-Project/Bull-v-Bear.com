@@ -1,0 +1,7 @@
+# BVB-010F — Provisional monetary reference configuration
+
+Planning inputs agreed for simulation on 27 November 2026: AUZV 4,200,000; DZUV 21,000,000; SEZQ 40,000,000; DPZE 50,000,000; ASVR 110,000,000. These are conversation-derived proposals, not independently verified consensus supply limits. In particular, distinguish issuance targets from hard caps and future emission policies. Denzuve's conflicting advertised supply requires source reconciliation. Verify all five emission schedules, special issuance paths, and unit precision before live activation. No future tail emission or lost-coin emission automatically changes the reference.
+
+Reference supply AUZV 4,200,000; daily allowance one reference coin; exact integer division rounds down. Market weighting fixed at zero; no market data dependency. Individual quote uses provisional 10% treasury and 1% claim parameters from BVB-010D. These do not yet enforce an aggregate 10% treasury budget. Explicit units-per-coin is required, and all test precision values are fixtures. All currencies except Denzuve remain disabled in the faucet engine; the policy factory does not enable any currency.
+
+Four new tests authored. Complete regression execution pending. No live integration or production change. Rolling limit must be atomically integrated and revalidated at payment with durable timestamps, pending reservations, trusted time and aggregate treasury budget. Source audit and qualification remain outstanding.
